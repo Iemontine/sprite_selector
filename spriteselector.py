@@ -2,10 +2,10 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk
 
-class SpriteSelector:
+class SpriteEditor:
     def __init__(self, root):
         self.root = root
-        self.root.title("Sprite Selector")
+        self.root.title("Sprite Editor")
         
         self.cell_size = tk.IntVar(value=16)
         self.show_grid = tk.BooleanVar(value=False)
@@ -13,6 +13,7 @@ class SpriteSelector:
         self.start_x = None
         self.start_y = None
         self.existing_spritesheet = None
+        self.spritesheet_path = None
         
         self.create_widgets()
         self.bind_shortcuts()
@@ -74,7 +75,7 @@ class SpriteSelector:
         self.canvas.delete("selection")
     
     def load_spritesheet(self):
-        file_path = "new_spritesheet.png"
+        file_path = filedialog.askopenfilename(filetypes=[("PNG files", "*.png")])
         if file_path:
             self.existing_spritesheet = Image.open(file_path)
             self.display_spritesheet()
@@ -154,6 +155,11 @@ class SpriteSelector:
         if not self.selected_sprites:
             return
         
+        if not self.spritesheet_path:
+            self.spritesheet_path = filedialog.asksaveasfilename(defaultextension=".png", filetypes=[("PNG files", "*.png")])
+            if not self.spritesheet_path:
+                return
+        
         cell_size = self.cell_size.get()
         sheet_width = 512  # Example width, can be adjusted
         num_columns = sheet_width // cell_size
@@ -181,8 +187,8 @@ class SpriteSelector:
             current_x += sprite_width
         
         new_image = self.remove_empty_rows(new_image, cell_size)
-        new_image.save("new_spritesheet.png")
-        messagebox.showinfo("Success", "New spritesheet generated as 'new_spritesheet.png'")
+        new_image.save(self.spritesheet_path)
+        messagebox.showinfo("Success", f"New spritesheet generated as '{self.spritesheet_path}'")
     
     def remove_empty_rows(self, image, cell_size):
         width, height = image.size
@@ -212,15 +218,19 @@ class SpriteSelector:
             return image
     
     def append_to_spritesheet(self):
+        if not self.spritesheet_path:
+            self.spritesheet_path = filedialog.askopenfilename(filetypes=[("PNG files", "*.png")])
+            if not self.spritesheet_path:
+                return
         try:
-            self.existing_spritesheet = Image.open("new_spritesheet.png")
+            self.existing_spritesheet = Image.open(self.spritesheet_path)
         except FileNotFoundError:
-            messagebox.showerror("Error", "new_spritesheet.png not found.")
+            messagebox.showerror("Error", f"{self.spritesheet_path} not found.")
             return
         self.generate_spritesheet()
         self.existing_spritesheet = None  # Prevent displaying the spritesheet
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = SpriteSelector(root)
+    app = SpriteEditor(root)
     root.mainloop()
